@@ -1,0 +1,63 @@
+/* Project tabs container */
+.project-tabs-container {
+  display: flex;
+  background-color: rgba(31, 41, 55, 0.5);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.project-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  flex: 1;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.project-tab.active {
+  background-color: #000;
+  color: white;
+}
+
+.project-tab:not(.active) {
+  background-color: transparent;
+  color: #d1d5db;
+}
+
+.project-tab:not(.active):hover {
+  background-color: rgba(55, 65, 81, 0.5);
+}
+
+/* Mobile grid layout for project tabs */
+@media (max-width: 768px) {
+  .project-tabs-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    background-color: transparent;
+    margin-bottom: 2rem;
+  }
+
+  .project-tab {
+    background-color: rgba(31, 41, 55, 0.5);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin: 0;
+  }
+
+  .project-tab.active {
+    background-color: #000;
+  }
+
+  /* Make Java tab centered in the last row */
+  .project-tab:last-child {
+    grid-column: 1 / span 2;
+    max-width: 50%;
+    margin: 0 auto;
+  }
+}
+

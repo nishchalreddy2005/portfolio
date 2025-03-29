@@ -1,0 +1,22 @@
+.TabsList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .TabsList {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .TabsTrigger {
+    flex: 1;
+    min-width: 120px;
+    margin-bottom: 0.5rem;
+  }
+}
+
