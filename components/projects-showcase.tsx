@@ -251,4 +251,3 @@ export default function ProjectsShowcase({ projects = [] }) {
     </div>
   )
 }
-

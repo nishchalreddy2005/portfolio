@@ -127,4 +127,3 @@ export default function Hero3D() {
     </Canvas>
   )
 }
-

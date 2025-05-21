@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
-import { technicalSkills, softSkills } from "./skills-data"
 
 // Dynamically import the 3D component with no SSR
 const Skills3DDynamic = dynamic(() => import("./skills-3d"), {
   ssr: false,
-  loading: () => <div className="h-[400px] w-full rounded-xl bg-muted/20"></div>,
+  loading: () => (
+    <div className="h-[500px] w-full rounded-xl bg-muted/20 flex items-center justify-center">
+      <div className="text-foreground/70">Loading interactive skills visualization...</div>
+    </div>
+  ),
 })
 
-export default function Skills3DWrapper({ activeTab }) {
+export default function Skills3DWrapper({ activeTab, technicalSkills = [], softSkills = [], customCategories = [] }) {
   const [isBrowser, setIsBrowser] = useState(false)
   const [use3D, setUse3D] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
@@ -56,7 +59,7 @@ export default function Skills3DWrapper({ activeTab }) {
 
   if (!use3D) {
     return (
-      <div className="h-[400px] w-full rounded-xl bg-gradient-to-br from-gray-900 to-black p-6 flex flex-col items-center justify-center">
+      <div className="h-[500px] w-full rounded-xl bg-gradient-to-br from-gray-900 to-black p-6 flex flex-col items-center justify-center">
         <h3 className="text-xl font-bold text-white mb-6">
           {activeTab === "technical" ? "Technical Skills" : "Soft Skills"}
         </h3>
@@ -74,6 +77,12 @@ export default function Skills3DWrapper({ activeTab }) {
     )
   }
 
-  return <Skills3DDynamic activeTab={activeTab} />
+  return (
+    <Skills3DDynamic
+      activeTab={activeTab}
+      technicalSkills={technicalSkills}
+      softSkills={softSkills}
+      customCategories={customCategories}
+    />
+  )
 }
-

@@ -24,4 +24,3 @@ export default function Hero3DWrapper() {
 
   return <Hero3DDynamic />
 }
-

@@ -11,7 +11,7 @@ import { Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import emailjs from "@emailjs/browser"
 
-export default function Contact() {
+export default function Contact({ data }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -116,7 +116,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <CardTitle className="text-sm font-medium text-foreground/60">Email</CardTitle>
-                    <CardDescription className="text-foreground">2200033247cseh@gmail.com</CardDescription>
+                    <CardDescription className="text-foreground">{data.email}</CardDescription>
                   </div>
                 </CardContent>
               </Card>
@@ -128,7 +128,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <CardTitle className="text-sm font-medium text-foreground/60">Phone</CardTitle>
-                    <CardDescription className="text-foreground">+91 8431099097</CardDescription>
+                    <CardDescription className="text-foreground">{data.phone}</CardDescription>
                   </div>
                 </CardContent>
               </Card>
@@ -140,7 +140,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <CardTitle className="text-sm font-medium text-foreground/60">Location</CardTitle>
-                    <CardDescription className="text-foreground">Vijayawada, India 522501</CardDescription>
+                    <CardDescription className="text-foreground">{data.location}</CardDescription>
                   </div>
                 </CardContent>
               </Card>
@@ -267,4 +267,3 @@ export default function Contact() {
     </section>
   )
 }
-

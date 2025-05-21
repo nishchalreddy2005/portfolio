@@ -1,91 +1,26 @@
 "use client"
 
 import { CardFooter } from "@/components/ui/card"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Github, ExternalLink, Code, Layers, Linkedin } from "lucide-react"
+import { Github, ExternalLink, Linkedin, Users, User } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import "./projects.css"
+import { getSupabaseBrowserClient } from "@/utils/supabase-client"
+import ProjectCategoriesNav from "./project-categories-nav"
+import { useTheme } from "next-themes"
 
-const projectsData = [
-  {
-    id: 1,
-    title: "Banking and Finance Management System",
-    category: "Python Full Stack Web Development",
-    description:
-      "A secure and scalable web application for managing banking and financial transactions using Django and PostgreSQL.",
-    features: [
-      "Implemented authentication, account management, and transaction processing features.",
-      "Ensured data integrity and security through robust database design and encryption techniques.",
-    ],
-    technologies: ["Python", "Django", "PostgreSQL", "HTML/CSS", "JavaScript"],
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HANvsAaOGSzRpC09BJlzp3JeJPAptW.png",
-    github: "https://github.com/nishchalreddy2005/banking-management-system",
-    demo: "#",
-    linkedin:
-      "https://www.linkedin.com/posts/pidikiti-sathwik_skilldevelopment-kluniversity-engineering-activity-7103402089770307584-AoPL?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAEWwBNMBxDIjzIsQFygYjlLAdnx1TxyiVV4",
-  },
-  {
-    id: 2,
-    title: "Student Counseling and Management System",
-    category: "MERN Stack Web Development",
-    description:
-      "A web-based platform to facilitate student counseling and academic tracking using MongoDB, Node.js, React, and Express.",
-    features: [
-      "Implemented role-based access for students and counselors to schedule sessions and manage records.",
-      "Integrated real-time chat and notifications for seamless communication.",
-    ],
-    technologies: ["MongoDB", "Express.js", "React", "Node.js", "Socket.io"],
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-UR0Uo8ELbpGO4ApDPIsLnynkJT2RmG.png",
-    github: "https://github.com/nishchalreddy2005/student-counselling-management-system",
-    demo: "#",
-    linkedin:
-      "https://www.linkedin.com/posts/gvrnishchalreddy_y22mswds14-sdp-mswd-activity-7159252043612790784-roPp/?rcm=ACoAAEWwBNMBxDIjzIsQFygYjlLAdnx1TxyiVV4",
-  },
-  {
-    id: 3,
-    title: "Electricity Bill Generation System",
-    category: "Enterprise Programming",
-    description:
-      "An enterprise-grade billing system to automate electricity bill generation using EJB, MySQL, JSP, and Code Ready Studio.",
-    features: [
-      "Implemented customer management, bill calculation, and payment tracking functionalities.",
-      "Optimized system performance for handling large-scale user data and transactions.",
-    ],
-    technologies: ["Java EE", "EJB", "MySQL", "JSP", "Code Ready Studio"],
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-h7rnvolAJgSuRMaX8kMklnDAicPXGR.png",
-    github: "https://github.com/nishchalreddy2005/Electrictily-billing-system",
-    demo: "#",
-    linkedin: "#",
-  },
-  {
-    id: 4,
-    title: "Student Feedback and Management System",
-    category: "Java Full Stack Development",
-    description: "A feedback management platform for educational institutions using Spring Boot, MySQL, and React.",
-    features: [
-      "Designed an intuitive user interface for students to submit feedback and administrators to analyze reports.",
-      "Integrated sentiment analysis and data visualization for better decision-making.",
-    ],
-    technologies: ["Java", "Spring Boot", "MySQL", "React", "Chart.js"],
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-XZVuD6KPOw7XDYULweHBOoLrDFNpPD.png",
-    github: "https://github.com/nishchalreddy2005/JFSD_S34_15",
-    demo: "#",
-    linkedin:
-      "https://www.linkedin.com/posts/gvrnishchalreddy_activity-7247458297803350016-AhTl?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAEWwBNMBxDIjzIsQFygYjlLAdnx1TxyiVV4",
-  },
-]
-
-export default function Projects() {
+const Projects = () => {
   const [activeCategory, setActiveCategory] = useState("all")
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   })
+  const { theme } = useTheme()
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -104,139 +39,223 @@ export default function Projects() {
 
   const { toast } = useToast()
 
-  // Extract categories from project data
-  const categories = ["all", "python", "mern", "enterprise", "java"]
+  const [projectsData, setProjectsData] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const supabase = getSupabaseBrowserClient()
+
+        // Fetch categories first
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from("project_category")
+          .select("*")
+          .order("name", { ascending: true })
+
+        if (categoriesError) throw categoriesError
+        setCategories(categoriesData || [])
+
+        // Fetch projects
+        const { data: projects, error: projectsError } = await supabase
+          .from("project")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        if (projectsError) throw projectsError
+
+        // For each project, fetch its technologies
+        const enhancedProjects = await Promise.all(
+          projects.map(async (project) => {
+            // Fetch technologies
+            const { data: technologies } = await supabase
+              .from("project_technology")
+              .select("technology")
+              .eq("project_id", project.id)
+              .order("display_order", { ascending: true })
+
+            // Find the category name
+            const category = categoriesData?.find((c) => c.id === project.category_id)
+
+            return {
+              ...project,
+              categoryName: category?.name || project.category || "Uncategorized",
+              technologies: technologies?.map((t) => t.technology) || [],
+            }
+          }),
+        )
+
+        setProjectsData(enhancedProjects)
+      } catch (error) {
+        console.error("Error fetching projects:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load projects",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
+  }, [])
 
   // Filter projects based on active category
   const filteredProjects =
     activeCategory === "all"
       ? projectsData
-      : projectsData.filter((project) => project.category.toLowerCase().includes(activeCategory))
+      : projectsData.filter((project) => project.category_id?.toString() === activeCategory)
 
-  return (
-    <section id="projects" className="section-container bg-background">
-      <div className="container mx-auto">
-        <h2 className="section-title">My Projects</h2>
-
-        {/* Project navigation tabs */}
-        <div className="max-w-4xl mx-auto mb-10">
-          <div className="project-tabs-container">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`project-tab ${activeCategory === category ? "active" : ""}`}
-              >
-                {category === "all" ? (
-                  <>
-                    <Layers className="h-4 w-4" /> All Projects
-                  </>
-                ) : (
-                  <>
-                    <Code className="h-4 w-4" /> {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </>
-                )}
-              </button>
-            ))}
+  if (loading) {
+    return (
+      <section id="projects" className="section-container">
+        <div className="container mx-auto">
+          <h2 className="section-title text-[#00e5a0]">My Projects</h2>
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00e5a0]"></div>
           </div>
         </div>
+      </section>
+    )
+  }
+
+  return (
+    <section id="projects" className="section-container">
+      <div className="container mx-auto">
+        <h2 className="section-title text-[#00e5a0] mb-10">My Projects</h2>
+
+        {/* Project navigation tabs */}
+        <ProjectCategoriesNav activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
 
         <motion.div
           ref={ref}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
           variants={containerVariants}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto mt-10"
         >
-          {filteredProjects.map((project) => (
-            <motion.div key={project.id} variants={itemVariants} transition={{ duration: 0.5 }}>
-              <Card className="h-full flex flex-col overflow-hidden card-hover">
-                <div className="relative h-48 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/20 z-10"></div>
-                  <img
-                    src={project.image || "/placeholder.svg"}
-                    alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    crossOrigin="anonymous"
-                  />
-                </div>
+          {filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => (
+              <motion.div key={project.id} variants={itemVariants} transition={{ duration: 0.5 }}>
+                <Card className="h-full flex flex-col overflow-hidden card-hover">
+                  <div className="relative h-48 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/20 z-10"></div>
+                    <img
+                      src={project.image || "/placeholder.svg"}
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
 
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl">{project.title}</CardTitle>
-                      <CardDescription className="mt-1">{project.category}</CardDescription>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-xl">{project.title}</CardTitle>
+                        <div className="flex flex-col gap-1 mt-1">
+                          {/* Display project type instead of category if available */}
+                          {project.project_type ? (
+                            <CardDescription className="text-primary font-medium">
+                              {project.project_type}
+                            </CardDescription>
+                          ) : (
+                            <CardDescription>{project.categoryName}</CardDescription>
+                          )}
+                          {project.date && (
+                            <CardDescription className="text-xs text-foreground/50">{project.date}</CardDescription>
+                          )}
+                          {/* Display team type with icon */}
+                          <div className="flex items-center gap-1 text-xs text-foreground/70 mt-1">
+                            {project.team_type === "team" ? (
+                              <>
+                                <Users className="h-3 w-3" /> Team Project
+                              </>
+                            ) : (
+                              <>
+                                <User className="h-3 w-3" /> Solo Project
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className="flex-grow">
-                  <p className="text-foreground/70 mb-4">{project.description}</p>
+                  <CardContent className="flex-grow">
+                    <p className="text-foreground/70 mb-4">{project.description}</p>
 
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {project.technologies.map((tech, index) => (
-                      <Badge key={index} variant="outline" className="bg-foreground/5">
-                        {tech}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {project.technologies.map((tech, index) => (
+                        <Badge key={index} variant="outline" className="bg-foreground/5">
+                          {tech}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
 
-                <CardFooter className="flex flex-wrap gap-2 justify-center sm:justify-between items-center w-full px-6 pb-6">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="group flex-1 sm:flex-none min-w-[80px]"
-                    onClick={() => window.open(project.github || "https://github.com/nishchalreddy2005", "_blank")}
-                  >
-                    <Github className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Code
-                  </Button>
+                  <CardFooter className="flex flex-wrap gap-2 justify-center sm:justify-between items-center w-full px-6 pb-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="group flex-1 sm:flex-none min-w-[80px]"
+                      onClick={() => window.open(project.github || "https://github.com/nishchalreddy2005", "_blank")}
+                    >
+                      <Github className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" /> Code
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="group flex-1 sm:flex-none min-w-[80px] text-[#0077b5] border-[#0077b5]/20 bg-[#0077b5]/5 hover:bg-[#0077b5]/10 dark:text-white dark:border-white/20 dark:bg-[#0077b5]/10 dark:hover:bg-[#0077b5]/20"
-                    onClick={() => {
-                      if (project.linkedin && project.linkedin !== "#") {
-                        window.open(project.linkedin, "_blank")
-                      } else {
-                        toast({
-                          title: "LinkedIn Not Available",
-                          description: "LinkedIn post is not available for this project.",
-                          variant: "default",
-                          duration: 3000,
-                        })
-                      }
-                    }}
-                  >
-                    <Linkedin className="mr-2 h-4 w-4 text-[#0077b5]" /> LinkedIn
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="group flex-1 sm:flex-none min-w-[80px] text-[#0077b5] border-[#0077b5]/20 bg-[#0077b5]/5 hover:bg-[#0077b5]/10 dark:text-white dark:border-white/20 dark:bg-[#0077b5]/10 dark:hover:bg-[#0077b5]/20"
+                      onClick={() => {
+                        if (project.linkedin && project.linkedin !== "#") {
+                          window.open(project.linkedin, "_blank")
+                        } else {
+                          toast({
+                            title: "LinkedIn Not Available",
+                            description: "LinkedIn post is not available for this project.",
+                            variant: "default",
+                            duration: 3000,
+                          })
+                        }
+                      }}
+                    >
+                      <Linkedin className="mr-2 h-4 w-4 text-[#0077b5]" /> LinkedIn
+                    </Button>
 
-                  <Button
-                    size="sm"
-                    className="flex-1 sm:flex-none min-w-[80px] bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-                    onClick={() => {
-                      if (project.demo && project.demo !== "#") {
-                        window.open(project.demo, "_blank")
-                      } else {
-                        toast({
-                          title: "Demo Not Available",
-                          description: "This project is not deployed yet.",
-                          variant: "default",
-                          duration: 3000,
-                        })
-                      }
-                    }}
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" /> Demo
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))}
+                    <Button
+                      size="sm"
+                      className="flex-1 sm:flex-none min-w-[80px] bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                      onClick={() => {
+                        if (project.demo && project.demo !== "#") {
+                          window.open(project.demo, "_blank")
+                        } else {
+                          toast({
+                            title: "Demo Not Available",
+                            description: "This project is not deployed yet.",
+                            variant: "default",
+                            duration: 3000,
+                          })
+                        }
+                      }}
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" /> Demo
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-2 text-center py-10">
+              <p className="text-foreground/70">No projects found in this category.</p>
+            </div>
+          )}
         </motion.div>
       </div>
     </section>
   )
 }
 
+export default Projects

@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowDown, FileText, ChevronRight, Linkedin, Github } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { getProfileData } from "@/utils/local-storage-service"
 
 // Advanced Typewriter effect component
 const AdvancedTypewriter = ({ phrases, typingSpeed = 100, deletingSpeed = 50, delayAfterPhrase = 1500 }) => {
@@ -69,6 +70,9 @@ const AdvancedTypewriter = ({ phrases, typingSpeed = 100, deletingSpeed = 50, de
 
 export default function Hero() {
   const [isMounted, setIsMounted] = useState(false)
+  const [resumeLink, setResumeLink] = useState(
+    "https://drive.google.com/uc?export=download&id=1JVLB0XEdKztxMybpN-mAg_ZXxxbuR7ZV",
+  )
   const canvasRef = useRef(null)
   const animationRef = useRef(null)
   const { toast } = useToast()
@@ -88,6 +92,14 @@ export default function Hero() {
 
   useEffect(() => {
     setIsMounted(true)
+
+    // Load resume link from localStorage
+    if (typeof window !== "undefined") {
+      const profileData = getProfileData()
+      if (profileData.settings?.resumeLink) {
+        setResumeLink(profileData.settings.resumeLink)
+      }
+    }
   }, [])
 
   // Handle resume download
@@ -233,14 +245,14 @@ export default function Hero() {
 
           <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-4 mt-8">
             <a
-              href="https://drive.google.com/uc?export=download&id=1JVLB0XEdKztxMybpN-mAg_ZXxxbuR7ZV"
+              href={resumeLink}
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleDownloadResume}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
             >
               <FileText className="mr-2 h-4 w-4" />
-              Download CV
+              Download Resume
               <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </a>
 
@@ -282,4 +294,3 @@ export default function Hero() {
     </section>
   )
 }
-

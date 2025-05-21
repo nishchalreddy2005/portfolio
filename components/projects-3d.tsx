@@ -91,4 +91,3 @@ export default function Projects3D({ projects }) {
     </div>
   )
 }
-

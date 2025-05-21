@@ -22,4 +22,3 @@ export default function Projects3DWrapper({ projects }) {
 
   return <Projects3DDynamic projects={projects} />
 }
-
