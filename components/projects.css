@@ -19,13 +19,13 @@
 }
 
 .project-tab.active {
-  background-color: var(--primary);
+  background-color: #000;
   color: white;
 }
 
 .project-tab:not(.active) {
   background-color: transparent;
-  color: var(--muted-foreground);
+  color: #d1d5db;
 }
 
 .project-tab:not(.active):hover {
@@ -50,7 +50,7 @@
   }
 
   .project-tab.active {
-    background-color: var(--primary);
+    background-color: #000;
   }
 
   /* Make Java tab centered in the last row */

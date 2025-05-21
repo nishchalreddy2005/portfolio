@@ -1,15 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { Github, Linkedin, Mail, Phone, ArrowUp } from "lucide-react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/contexts/auth-context"
 
 export default function Footer() {
   const [isVisible, setIsVisible] = useState(false)
-  const { isAuthenticated } = useAuth()
-  const router = useRouter()
 
   // Show button when page is scrolled down
   useEffect(() => {
@@ -31,14 +27,6 @@ export default function Footer() {
       top: 0,
       behavior: "smooth",
     })
-  }
-
-  const handleAdminClick = () => {
-    if (isAuthenticated) {
-      router.push("/admin/profile")
-    } else {
-      router.push("/admin")
-    }
   }
 
   return (
@@ -89,20 +77,10 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-foreground/60 text-sm mb-4 md:mb-0">
+        <div className="border-t border-border mt-8 pt-8 flex justify-center">
+          <p className="text-foreground/60 text-sm">
             &copy; {new Date().getFullYear()} G V R Nishchal Reddy. All rights reserved.
           </p>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-colors"
-            onClick={handleAdminClick}
-            aria-label="Admin Dashboard"
-          >
-            <img src="/images/admin-icon.png" alt="" className="w-5 h-5" />
-          </Button>
         </div>
       </div>
 
