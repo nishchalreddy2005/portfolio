@@ -25,13 +25,13 @@ export const technicalSkills = [
 
 export const softSkills = [
   { name: "Teamwork", level: 90 },
-  { name: "Adaptability", level: 85 },
-  { name: "Active Listening", level: 85 },
-  { name: "Communication", level: 88 },
-  { name: "Problem Solving", level: 90 },
   { name: "Leadership", level: 85 },
+  { name: "Adaptability", level: 85 },
   { name: "Creativity", level: 82 },
+  { name: "Active Listening", level: 85 },
   { name: "Critical Thinking", level: 87 },
+  { name: "Communication", level: 88 },
   { name: "Time Management", level: 84 },
+  { name: "Problem Solving", level: 90 },
   { name: "Multitasking", level: 83 },
 ]

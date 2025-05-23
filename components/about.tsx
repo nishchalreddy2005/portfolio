@@ -4,12 +4,45 @@ import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Mail, MapPin, Phone, User } from "lucide-react"
+import { useEffect, useState } from "react"
 
-export default function About() {
+interface AboutProps {
+  data: {
+    bio: string
+    name?: string
+    email?: string
+    phone?: string
+    location?: string
+    image_url?: string
+  }
+}
+
+export default function About({ data }: AboutProps) {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   })
+
+  // State to store the profile image URL and name
+  const [profileImage, setProfileImage] = useState<string>("")
+  const [profileName, setProfileName] = useState<string>("")
+
+  // Effect to get the profile data from localStorage if not in props
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // For image URL
+      const imageUrl = data.image_url || localStorage.getItem("profile_image_url") || ""
+      setProfileImage(imageUrl)
+
+      // For name
+      const name = data.name || localStorage.getItem("profile_name") || "G V R Nishchal Reddy"
+      setProfileName(name)
+
+      // Log for debugging
+      console.log("Profile image URL:", imageUrl)
+      console.log("Profile name:", name)
+    }
+  }, [data.image_url, data.name])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -26,6 +59,11 @@ export default function About() {
     visible: { opacity: 1, y: 0 },
   }
 
+  // Use data from props or fallback to defaults
+  const email = data.email || "2200033247cseh@gmail.com"
+  const phone = data.phone || "+91 8431099097"
+  const location = data.location || "Vijayawada, India"
+
   return (
     <section id="about" className="section-container bg-background">
       <div className="container mx-auto">
@@ -41,11 +79,23 @@ export default function About() {
           <motion.div variants={itemVariants} className="relative">
             <div className="relative">
               <div className="w-full aspect-square bg-gradient-to-tr from-primary/20 via-secondary/20 to-accent/20 rounded-2xl overflow-hidden">
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-0u3lCifx5qGr6LtBszLsZzgAgZoirw.png"
-                  alt="Nishchal Reddy"
-                  className="w-full h-full object-cover rounded-2xl"
-                />
+                {profileImage ? (
+                  <img
+                    src={profileImage || "/placeholder.svg"}
+                    alt={profileName}
+                    className="w-full h-full object-cover rounded-2xl"
+                    onError={() => {
+                      // If image fails to load, clear it so we show the placeholder
+                      console.error("Failed to load profile image:", profileImage)
+                      setProfileImage("")
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+                    <User size={64} />
+                    <span className="sr-only">Profile image placeholder</span>
+                  </div>
+                )}
               </div>
 
               {/* Decorative elements */}
@@ -59,16 +109,7 @@ export default function About() {
             <h3 className="text-2xl font-bold mb-4 gradient-heading">Computer Science Engineer & Tech Enthusiast</h3>
 
             <div className="space-y-4 text-foreground/80 mb-8">
-              <p>
-                I'm a dedicated professional with experience in leading technology and society initiatives at Focus, the
-                student governance body at K L University, and an internship with Indian Railways.
-              </p>
-              <p>
-                I demonstrate strong leadership, communication, and organizational skills through organizing workshops
-                and streamlining processes. I possess a friendly, positive attitude with proven abilities in teamwork,
-                problem-solving, and customer service.
-              </p>
-              <p>My career goals include leveraging technical expertise to drive impactful societal change.</p>
+              <p>{data.bio}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -79,7 +120,7 @@ export default function About() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-foreground/60">Name</h4>
-                    <p className="font-medium">G V R Nishchal Reddy</p>
+                    <p className="font-medium">{profileName}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -91,7 +132,7 @@ export default function About() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-foreground/60">Location</h4>
-                    <p className="font-medium">Vijayawada, India</p>
+                    <p className="font-medium">{location}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -103,7 +144,7 @@ export default function About() {
                   </div>
                   <div className="w-full">
                     <h4 className="text-sm font-medium text-foreground/60">Email</h4>
-                    <p className="font-medium break-words text-sm sm:text-base">2200033247cseh@gmail.com</p>
+                    <p className="font-medium break-words text-sm sm:text-base">{email}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -115,7 +156,7 @@ export default function About() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-foreground/60">Phone</h4>
-                    <p className="font-medium">+91 8431099097</p>
+                    <p className="font-medium">{phone}</p>
                   </div>
                 </CardContent>
               </Card>

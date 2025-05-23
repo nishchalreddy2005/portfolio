@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Code, Users, Zap, Database, Globe, Cpu, BarChart } from "lucide-react"
+import { Users } from "lucide-react"
 import Skills3DWrapper from "./skills-3d-wrapper"
-import { technicalSkills, softSkills } from "./skills-data"
+import MobileSkillsView from "./mobile-skills-view"
+import { useMediaQuery } from "@/hooks/use-media-query"
+import { CustomIcon } from "./custom-icons"
 
 function SkillBar({ name, level, isAnimated = true }) {
   return (
@@ -28,12 +30,14 @@ function SkillBar({ name, level, isAnimated = true }) {
   )
 }
 
-export default function Skills() {
+export default function Skills({ data }) {
   const [activeTab, setActiveTab] = useState("technical")
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   })
+
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -50,43 +54,83 @@ export default function Skills() {
     visible: { opacity: 1, y: 0 },
   }
 
+  // Ensure we have valid data
+  const skillsData = {
+    technical: data?.technical || [],
+    soft: data?.soft || [],
+    customCategories: data?.customCategories || [],
+  }
+
+  // For debugging
+  useEffect(() => {
+    console.log("Skills component received data:", data)
+    console.log("Custom categories in skills component:", skillsData.customCategories)
+  }, [data])
+
   // Group technical skills by category
-  const groupedTechnicalSkills = technicalSkills.reduce((acc, skill) => {
-    if (!acc[skill.category]) {
-      acc[skill.category] = []
+  const groupedTechnicalSkills = skillsData.technical.reduce((acc, skill) => {
+    // Get the category name - either from the category field or from the custom category
+    const categoryName = skill.category
+
+    if (!acc[categoryName]) {
+      acc[categoryName] = []
     }
-    acc[skill.category].push(skill)
+    acc[categoryName].push(skill)
     return acc
   }, {})
 
+  // Get a list of categories that actually have skills
+  const categoriesWithSkills = Object.keys(groupedTechnicalSkills)
+
+  // Filter customCategories to only include those that have skills
+  const activeCustomCategories = skillsData.customCategories.filter((category) =>
+    categoriesWithSkills.includes(category.name),
+  )
+
   // Group soft skills into two columns for better display
-  const softSkillsColumn1 = softSkills.slice(0, Math.ceil(softSkills.length / 2))
-  const softSkillsColumn2 = softSkills.slice(Math.ceil(softSkills.length / 2))
+  const softSkillsColumn1 = skillsData.soft.slice(0, Math.ceil(skillsData.soft.length / 2))
+  const softSkillsColumn2 = skillsData.soft.slice(Math.ceil(skillsData.soft.length / 2))
+
+  // Default category colors
+  const DEFAULT_CATEGORY_COLORS = {
+    Languages: "#3b82f6", // Blue
+    Frameworks: "#8b5cf6", // Purple
+    Databases: "#10b981", // Green
+    Web: "#ef4444", // Red
+    Advanced: "#f59e0b", // Orange
+    Data: "#06b6d4", // Cyan
+  }
+
+  // Default category icons
+  const DEFAULT_CATEGORY_ICONS = {
+    Languages: "languages",
+    Frameworks: "frameworks",
+    Databases: "databases",
+    Web: "web",
+    Advanced: "advanced",
+    Data: "data",
+  }
 
   // Get icon for skill category
   const getCategoryIcon = (category) => {
-    switch (category) {
-      case "Languages":
-        return <Code className="h-4 w-4 mr-2 text-primary" />
-      case "Frameworks":
-        return <Zap className="h-4 w-4 mr-2 text-purple-500" />
-      case "Databases":
-        return <Database className="h-4 w-4 mr-2 text-green-500" />
-      case "Web":
-        return <Globe className="h-4 w-4 mr-2 text-rose-500" />
-      case "Advanced":
-        return <Cpu className="h-4 w-4 mr-2 text-amber-500" />
-      case "Data":
-        return <BarChart className="h-4 w-4 mr-2 text-cyan-500" />
-      default:
-        return <Code className="h-4 w-4 mr-2 text-primary" />
-    }
-  }
+    // Find the category in our categories list
+    const categoryData = skillsData.customCategories.find((cat) => cat.name === category)
 
-  // Mobile view for skills
-  const renderMobileSkills = () => {
-    // Return null to hide the skills section on mobile
-    return null
+    console.log(`Getting icon for category: ${category}`, categoryData)
+
+    // Map category name to icon name
+    let iconName = "hash"
+
+    if (category in DEFAULT_CATEGORY_ICONS) {
+      iconName = DEFAULT_CATEGORY_ICONS[category]
+    } else if (categoryData?.icon) {
+      iconName = categoryData.icon
+    }
+
+    // Get color for the category
+    const color = categoryData?.color || DEFAULT_CATEGORY_COLORS[category] || "#6366f1"
+
+    return <CustomIcon name={iconName} className="mr-2" size={16} color={color} />
   }
 
   return (
@@ -109,7 +153,7 @@ export default function Skills() {
                 activeTab === "technical" ? "bg-black text-white" : "bg-gray-700/50 text-gray-300 hover:bg-gray-700/70"
               }`}
             >
-              <Code className="h-4 w-4" /> Technical Skills
+              <CustomIcon name="languages" size={16} /> Technical Skills
             </button>
             <button
               onClick={() => setActiveTab("soft")}
@@ -128,7 +172,7 @@ export default function Skills() {
                 <Card className="card-hover overflow-hidden">
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold mb-4 flex items-center">
-                      <Zap className="mr-2 h-5 w-5 text-primary" />
+                      <CustomIcon name="frameworks" className="mr-2" size={20} />
                       Technical Proficiency
                     </h3>
                     <p className="text-foreground/70 mb-6">
@@ -137,15 +181,23 @@ export default function Skills() {
                       systems.
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {technicalSkills.map((skill) => (
-                        <Badge
-                          key={skill.name}
-                          variant="secondary"
-                          className="bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/20 dark:text-primary-foreground"
-                        >
-                          {skill.name}
-                        </Badge>
-                      ))}
+                      {skillsData.technical.map((skill) => {
+                        // Find the category for this skill
+                        const category = skillsData.customCategories.find((cat) => cat.name === skill.category)
+                        const categoryColor = category?.color || DEFAULT_CATEGORY_COLORS[skill.category] || "#6366f1"
+                        const badgeStyle = { backgroundColor: `${categoryColor}20`, color: categoryColor }
+
+                        return (
+                          <Badge
+                            key={skill.name}
+                            variant="secondary"
+                            className="bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/20 dark:text-primary-foreground"
+                            style={badgeStyle}
+                          >
+                            {skill.name}
+                          </Badge>
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>
@@ -157,25 +209,44 @@ export default function Skills() {
                       {category}
                     </h4>
                     <div className="grid grid-cols-2 gap-2">
-                      {skills.map((skill) => (
-                        <Badge
-                          key={skill.name}
-                          className="bg-foreground/10 text-foreground hover:bg-foreground/20 dark:bg-foreground/5 dark:text-foreground dark:hover:bg-foreground/10"
-                        >
-                          {skill.name}
-                        </Badge>
-                      ))}
+                      {skills.map((skill) => {
+                        // Find the category for this skill
+                        const categoryData = skillsData.customCategories.find((cat) => cat.name === skill.category)
+                        const categoryColor =
+                          categoryData?.color || DEFAULT_CATEGORY_COLORS[skill.category] || "#6366f1"
+                        const badgeStyle = { backgroundColor: `${categoryColor}20`, color: categoryColor }
+
+                        return (
+                          <Badge
+                            key={skill.name}
+                            className="bg-foreground/10 text-foreground hover:bg-foreground/20 dark:bg-foreground/5 dark:text-foreground dark:hover:bg-foreground/10"
+                            style={badgeStyle}
+                          >
+                            {skill.name}
+                          </Badge>
+                        )
+                      })}
                     </div>
                   </div>
                 ))}
               </motion.div>
 
               <motion.div variants={itemVariants} className="hidden md:block">
-                <Skills3DWrapper activeTab={activeTab} />
+                {/* Pass the filtered custom categories to the 3D wrapper */}
+                <Skills3DWrapper
+                  activeTab={activeTab}
+                  technicalSkills={skillsData.technical}
+                  softSkills={skillsData.soft}
+                  customCategories={activeCustomCategories}
+                />
               </motion.div>
 
               <motion.div variants={itemVariants} className="block md:hidden">
-                {renderMobileSkills()}
+                <MobileSkillsView
+                  activeTab={activeTab}
+                  skills={activeTab === "technical" ? skillsData.technical : skillsData.soft}
+                  customCategories={activeCustomCategories}
+                />
               </motion.div>
             </motion.div>
           )}
@@ -196,7 +267,7 @@ export default function Skills() {
                       successful collaboration in diverse environments.
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {softSkills.map((skill) => (
+                      {skillsData.soft.map((skill) => (
                         <Badge
                           key={skill.name}
                           variant="secondary"
@@ -234,11 +305,20 @@ export default function Skills() {
               </motion.div>
 
               <motion.div variants={itemVariants} className="hidden md:block">
-                <Skills3DWrapper activeTab={activeTab} />
+                <Skills3DWrapper
+                  activeTab={activeTab}
+                  technicalSkills={skillsData.technical}
+                  softSkills={skillsData.soft}
+                  customCategories={activeCustomCategories}
+                />
               </motion.div>
 
               <motion.div variants={itemVariants} className="block md:hidden">
-                {renderMobileSkills()}
+                <MobileSkillsView
+                  activeTab={activeTab}
+                  skills={activeTab === "technical" ? skillsData.technical : skillsData.soft}
+                  customCategories={activeCustomCategories}
+                />
               </motion.div>
             </motion.div>
           )}
